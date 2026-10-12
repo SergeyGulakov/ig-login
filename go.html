@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="referrer" content="no-referrer">
+<meta name="robots" content="noindex, nofollow">
+<title>Вход в Instagram</title>
+<style>
+  :root { --bg: #f6f4f1; --card: #ffffff; --text: #1d1d1f; --muted: #6e6e73; --accent: #2aabee; --err: #c0392b; }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #111113; --card: #1c1c1f; --text: #f2f2f2; --muted: #a1a1a6; --accent: #34b3f1; --err: #ff6b5b; }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 18px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+  main { max-width: 480px; margin: 0 auto; padding: 32px 16px 48px; }
+  .card { background: var(--card); border-radius: 20px; padding: 28px 22px; box-shadow: 0 2px 16px rgba(0,0,0,.06); text-align: center; }
+  .icon { font-size: 56px; line-height: 1; margin-bottom: 8px; }
+  h1 { font-size: 28px; margin: 4px 0 10px; }
+  p { margin: 0 0 18px; color: var(--muted); }
+  .btn { display: block; width: 100%; padding: 18px 16px; border-radius: 14px; font-size: 21px; font-weight: 600;
+         text-decoration: none; margin-top: 12px; background: var(--accent); color: #fff; }
+  .error h1 { color: var(--err); }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<main>
+  <div class="card" id="go" hidden>
+    <div class="icon">🔐</div>
+    <h1>Открываю Instagram…</h1>
+    <p>Если ничего не происходит — нажмите кнопку. Войдите в Instagram магазина и нажмите «Разрешить».</p>
+    <a class="btn" id="btn" href="#">Войти в Instagram</a>
+  </div>
+  <div class="card error" id="err" hidden>
+    <div class="icon">⚠️</div>
+    <h1>Ссылка неполная</h1>
+    <p>Попросите у бота новую ссылку.</p>
+  </div>
+  <noscript><div class="card"><p>Включите JavaScript в браузере или откройте ссылку в Safari.</p></div></noscript>
+</main>
+<script>
+(function () {
+  // Короткая ссылка от бота: go.html?s=<ID приложения>.<метка> (или go.html#…) — без «&», которые Telegram иногда портит.
+  // Здесь собирается обычная ссылка входа Instagram; секретов на странице нет (ID приложения — публичный).
+  var APP_ID = '4631110057108640';
+  var raw = new URLSearchParams(window.location.search).get('s') || window.location.hash.replace(/^#/, '');
+  var m = /^(?:(\d{6,20})\.)?([A-Za-z0-9_\-]{8,64})$/.exec(raw || '');
+  if (!m) { document.getElementById('err').hidden = false; return; }
+  var dir = window.location.href.split(/[?#]/)[0].replace(/[^\/]*$/, '');   // адрес возврата — папка этой страницы (…/ig-login/)
+  var q = new URLSearchParams({ force_reauth: 'true', enable_fb_login: 'false', client_id: m[1] || APP_ID, redirect_uri: dir,
+                                response_type: 'code', scope: 'instagram_business_basic,instagram_business_manage_insights', state: m[2] });
+  var url = 'https://www.instagram.com/oauth/authorize?' + q.toString();
+  document.getElementById('btn').href = url;
+  document.getElementById('go').hidden = false;
+  window.location.replace(url);
+})();
+</script>
+</body>
+</html>
