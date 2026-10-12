@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="referrer" content="no-referrer">
+<meta name="robots" content="noindex, nofollow">
+<title>Подключение Instagram</title>
+<style>
+  :root { --bg: #f6f4f1; --card: #ffffff; --text: #1d1d1f; --muted: #6e6e73; --accent: #2aabee; --ok: #1f9d55; --err: #c0392b; }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #111113; --card: #1c1c1f; --text: #f2f2f2; --muted: #a1a1a6; --accent: #34b3f1; --ok: #3ccf7a; --err: #ff6b5b; }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 18px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+  main { max-width: 480px; margin: 0 auto; padding: 32px 16px 48px; }
+  .card { background: var(--card); border-radius: 20px; padding: 28px 22px; box-shadow: 0 2px 16px rgba(0,0,0,.06); text-align: center; }
+  .icon { font-size: 56px; line-height: 1; margin-bottom: 8px; }
+  h1 { font-size: 30px; margin: 4px 0 10px; }
+  p { margin: 0 0 18px; color: var(--muted); }
+  .btn { display: block; width: 100%; padding: 18px 16px; border-radius: 14px; border: 0; font-size: 21px; font-weight: 600;
+         text-decoration: none; cursor: pointer; margin-top: 12px; }
+  .main { background: var(--accent); color: #fff; }
+  .second { background: transparent; color: var(--accent); border: 2px solid var(--accent); font-size: 18px; }
+  .note { font-size: 15px; margin-top: 18px; }
+  .done { color: var(--ok); font-weight: 600; min-height: 1.4em; margin-top: 10px; }
+  .error h1 { color: var(--err); }
+  textarea { position: absolute; left: -9999px; }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<main>
+  <div class="card" id="ok" hidden>
+    <div class="icon">✅</div>
+    <h1>Готово!</h1>
+    <p>Остался один шаг: нажмите кнопку — откроется Telegram с уже вписанным сообщением. Там нажмите «Отправить».</p>
+    <a class="btn main" id="send" href="#">Отправить боту</a>
+    <button class="btn second" id="copy" type="button">Скопировать код</button>
+    <div class="done" id="copied"></div>
+    <p class="note">Если кнопка не открыла Telegram: нажмите «Скопировать код», откройте чат с ботом и вставьте сообщение.<br>Код действует 1 час.</p>
+  </div>
+  <div class="card error" id="err" hidden>
+    <div class="icon">⚠️</div>
+    <h1>Доступ не выдан</h1>
+    <p id="errtext">Instagram не передал код. Попросите у бота новую ссылку и нажмите «Разрешить».</p>
+  </div>
+</main>
+<textarea id="buf" readonly></textarea>
+<script>
+(function () {
+  var BOT = 'SMM_managerTKN_bot';
+  var q = new URLSearchParams(window.location.search);
+  var code = (q.get('code') || '').replace(/#_$/, '');
+  var state = q.get('state') || '';
+  var okCode = /^[A-Za-z0-9_\-.~]{20,}$/.test(code) && /^[A-Za-z0-9_\-]{8,}$/.test(state);
+  if (!okCode) {
+    if (q.get('error')) {
+      document.getElementById('errtext').textContent = q.get('error_reason') === 'user_denied'
+        ? 'Вы нажали «Не разрешать». Если передумаете — попросите у бота новую ссылку.'
+        : 'Instagram не выдал доступ. Попросите у бота новую ссылку и попробуйте ещё раз.';
+    }
+    document.getElementById('err').hidden = false;
+    return;
+  }
+  var text = 'Instagram: ' + code + ' ' + state;
+  document.getElementById('send').href = 'https://t.me/' + BOT + '?text=' + encodeURIComponent(text);
+  document.getElementById('ok').hidden = false;
+  // код больше не нужен в адресной строке (не попадёт в историю и при пересылке ссылки)
+  try { history.replaceState(null, '', window.location.pathname); } catch (e) {}
+  document.getElementById('copy').addEventListener('click', function () {
+    var shown = function () { document.getElementById('copied').textContent = 'Скопировано — вставьте в чат с ботом'; };
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(text).then(shown, fallback);
+    } else { fallback(); }
+    function fallback() {
+      var b = document.getElementById('buf'); b.value = text; b.select(); b.setSelectionRange(0, text.length);
+      try { document.execCommand('copy'); shown(); } catch (e) { document.getElementById('copied').textContent = 'Не скопировалось — нажмите «Отправить боту»'; }
+    }
+  });
+})();
+</script>
+</body>
+</html>
